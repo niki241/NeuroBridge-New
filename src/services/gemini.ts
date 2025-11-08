@@ -1,8 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 import { EmotionState, TonePack } from '../types';
 
-// This relies on process.env.API_KEY being set in the execution environment.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Using Vite's import.meta.env for environment variables
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+if (!apiKey) {
+  console.error('GEMINI_API_KEY is not set in environment variables');
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 /**
  * Generates an AI response using the Gemini API based on user input and emotional context.
