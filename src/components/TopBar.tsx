@@ -81,50 +81,55 @@ const TopBar: React.FC<TopBarProps> = ({
       </div>
       <div className="flex items-center gap-6">
         <div className="relative" ref={dropdownRef}>
-          <button 
-            ref={buttonRef}
-            id="tone-pack-button"
-            aria-haspopup="true"
-            aria-expanded={isDropdownOpen}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            onKeyDown={handleDropdownKeyDown}
-            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors duration-300 glassmorphism px-4 py-2 rounded-lg w-40 justify-between"
-          >
-            <span className="flex items-center gap-2">
+          {showJournalButton && onViewJournal && (
+            <button
+              onClick={onViewJournal}
+              className="flex items-center gap-2 text-sm font-medium text-gray-200 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-all duration-200 border border-white/5 hover:border-white/10"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Journal</span>
+            </button>
+          )}
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              ref={buttonRef}
+              id="tone-pack-button"
+              aria-haspopup="true"
+              aria-expanded={isDropdownOpen}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              onKeyDown={handleDropdownKeyDown}
+              className="flex items-center gap-2 text-sm font-medium text-gray-200 hover:text-white transition-all duration-200 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg w-48 justify-between border border-white/5 hover:border-white/10"
+            >
+              <span className="flex items-center gap-2">
                 <span>{currentTonePack.flag}</span>
                 <span>{currentTonePack.name}</span>
-            </span>
-            <ChevronDownIcon className={`w-4 h-4 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
-          
-          <div className={`absolute top-full right-0 mt-2 w-48 glassmorphism rounded-lg shadow-lg overflow-hidden z-20 transition-all duration-300 ease-in-out ${isDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-             <ul role="menu" aria-orientation="vertical" aria-labelledby="tone-pack-button" onKeyDown={handleDropdownKeyDown}>
-                {tonePacks.map((pack, index) => (
-                    <li key={pack.id} role="presentation">
-                        <button 
-                            onClick={() => handleSelectPack(pack)}
-                            onKeyDown={(e) => handleItemKeyDown(e, index)}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-white/10 focus:bg-white/20 transition-colors duration-200 flex items-center gap-2"
-                            role="menuitem"
+              </span>
+              <ChevronDownIcon className={`w-4 h-4 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <div className={`absolute top-full right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden z-50 border border-white/5 transition-all duration-200 ease-out ${isDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+               <ul role="menu" aria-orientation="vertical" aria-labelledby="tone-pack-button" onKeyDown={handleDropdownKeyDown}>
+                  {tonePacks.map((pack, index) => (
+                      <li key={pack.id} className="border-b border-white/5 last:border-0">
+                        <button
+                          onClick={() => handleSelectPack(pack)}
+                          onKeyDown={(e) => handleItemKeyDown(e, index)}
+                          className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors duration-150 ${pack.id === currentTonePack.id ? 'bg-blue-500/10 text-blue-300' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
                         >
-                           <span>{pack.flag}</span> 
-                           <span>{pack.name}</span>
+                          <span className="text-base">{pack.flag}</span>
+                          <span className="font-medium">{pack.name}</span>
+                          {pack.id === currentTonePack.id && (
+                            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                          )}
                         </button>
-                    </li>
-                ))}
-             </ul>
+                      </li>
+                  ))}
+               </ul>
+            </div>
           </div>
         </div>
-        {showJournalButton && onViewJournal && (
-          <button
-            onClick={onViewJournal}
-            className="ml-4 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300 bg-white/10 hover:bg-white/20 text-white flex items-center"
-            aria-label="View therapy journal"
-          >
-            <span className="mr-2">📓</span>
-            Journal
-          </button>
-        )}
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full transition-all duration-500 ${isOnline ? 'bg-blue-400 animate-pulse neon-glow-blue' : 'bg-gray-500'}`}></div>
           <span className={`text-sm font-medium ${isOnline ? 'text-blue-300' : 'text-gray-400'}`}>{isOnline ? 'AI Connected' : 'Offline'}</span>

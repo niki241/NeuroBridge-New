@@ -8,7 +8,6 @@ const modes: { id: AppMode, label: string, icon: string }[] = [
     { id: 'chat', label: 'Chat', icon: '💬' },
     { id: 'video', label: 'Video', icon: '🎥' },
     { id: 'voice', label: 'Voice', icon: '🎧' },
-    { id: 'api', label: 'API', icon: '🧩' },
     { id: 'insights', label: 'Insights', icon: '📊' },
 ];
 

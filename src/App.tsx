@@ -390,15 +390,17 @@ const App: React.FC = () => {
   };
 
   const renderChatView = () => (
-    <>
-      <TopBar 
-        tonePacks={tonePacks}
-        currentTonePack={currentTonePack}
-        onTonePackChange={setCurrentTonePack}
-        onViewJournal={() => setShowJournal(true)}
-        showJournalButton={true}
-      />
-      <main className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-160px)]">
+    <div className="flex flex-col h-screen">
+      <div className="relative z-10">
+        <TopBar 
+          tonePacks={tonePacks}
+          currentTonePack={currentTonePack}
+          onTonePackChange={setCurrentTonePack}
+          onViewJournal={() => setShowJournal(true)}
+          showJournalButton={true}
+        />
+      </div>
+      <main className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-4 pt-2 px-4 pb-4 overflow-hidden">
         <div className="lg:col-span-2 h-full">
           <MainPanel 
             currentEmotion={currentEmotion}
@@ -446,7 +448,7 @@ const App: React.FC = () => {
         onSave={handleSaveJournalEntry}
         isSaving={isSavingJournal}
       />
-    </>
+    </div>
   );
 
   const renderJournalView = () => (

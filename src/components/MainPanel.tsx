@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import VideoDisplay from './VideoDisplay';
-// Fix: Import ChatWindow as a named import to resolve module loading issue.
 import { ChatWindow } from './ChatWindow';
 import InsightsDashboard from './InsightsDashboard';
 import Gamification from './Gamification';
-import { MicIcon, StarIcon } from './icons';
+import { MicIcon, StarIcon, ActivityIcon } from './icons';
 import { ChatMessage, EmotionState, AppMode } from '../types';
 
 interface MainPanelProps {
@@ -23,6 +22,8 @@ interface MainPanelProps {
   interimTranscript: string;
 }
 
+type TabType = 'main';
+
 const MainPanel: React.FC<MainPanelProps> = ({ 
     currentEmotion, 
     activeMode, 
@@ -38,6 +39,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
     isListening,
     interimTranscript
 }) => {
+  const [activeTab, setActiveTab] = useState<TabType>('main');
   const [tooltip, setTooltip] = useState<{ text: string; show: boolean }>({ text: '', show: false });
 
   useEffect(() => {
@@ -49,21 +51,14 @@ const MainPanel: React.FC<MainPanelProps> = ({
         case 'voice':
             newTooltipText = isListening ? 'Listening...' : 'Ready to listen...';
             break;
-        case 'api':
-            newTooltipText = 'Displaying raw data output.';
-            break;
-        case 'insights':
-            newTooltipText = 'Viewing user insights dashboard.';
-            break;
         case 'video':
+            newTooltipText = isCamOn ? 'Analyzing video feed...' : 'Video is off';
+            break;
         default:
             newTooltipText = currentEmotion.tooltip;
-            break;
     }
-    setTooltip({ text: newTooltipText, show: true });
-    const timer = setTimeout(() => setTooltip(prev => ({ ...prev, show: false })), 4000);
-    return () => clearTimeout(timer);
-  }, [currentEmotion, activeMode, isListening]);
+    setTooltip(prev => ({ ...prev, text: newTooltipText }));
+  }, [currentEmotion, activeMode, isListening, isCamOn]);
   
   const VoiceModeDisplay = () => (
     <div className="w-full h-full solid-bg-2 rounded-xl flex flex-col items-center justify-center text-center p-4">
@@ -73,72 +68,67 @@ const MainPanel: React.FC<MainPanelProps> = ({
     </div>
   );
 
-  const ApiModeDisplay = () => (
-    <div className="w-full h-full bg-black/50 rounded-xl flex flex-col items-start justify-start text-left p-6 font-mono text-sm overflow-auto">
-        <h2 className="text-xl font-bold mb-4 text-blue-300 font-sans">API Mode: Data Output</h2>
-        <pre className="text-lime-300 whitespace-pre-wrap w-full">
-            {JSON.stringify({
-                timestamp: new Date().toISOString(),
-                currentEmotion: {
-                    label: currentEmotion.name,
-                    score: currentEmotion.score / 100,
-                    confidence: 0.91
-                },
-                analysis: {
-                    text: "I understand. Let's explore that a bit more.",
-                    sentiment: "neutral",
-                    vocalTone: activeMode === 'voice' || activeMode === 'video' ? "calm" : null,
-                    facialExpression: activeMode === 'video' ? currentEmotion.name : null,
-                },
-                ui_suggestion: {
-                    tooltip: currentEmotion.tooltip,
-                    highlight_color: currentEmotion.color,
-                }
-            }, null, 2)}
-        </pre>
-    </div>
-  );
-
   return (
-    <div className="glassmorphism rounded-2xl p-4 h-full flex flex-col gap-4 relative">
-      {showRewardAnimation && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-              <div className="animate-glow-and-fade">
-                  <StarIcon 
-                      className="w-24 h-24 text-yellow-300" 
-                      style={{ filter: 'drop-shadow(0 0 15px rgba(252, 211, 77, 0.8))' }}
-                  />
-              </div>
-          </div>
-      )}
-      {activeMode === 'insights' ? (
-        <InsightsDashboard />
-      ) : (
-        <>
-          <div className={`relative flex-grow rounded-xl overflow-hidden min-h-0 ${activeMode === 'chat' ? 'hidden' : 'flex'}`}>
-            {activeMode === 'video' && <VideoDisplay isCamOn={isCamOn} isMirrored={isMirrorMode} currentEmotion={currentEmotion} />}
-            {activeMode === 'voice' && <VoiceModeDisplay />}
-            {activeMode === 'api' && <ApiModeDisplay />}
+    <div className="flex-1 flex flex-col bg-gray-900 text-white overflow-hidden">
+      {/* Top bar with emotion indicator */}
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
+          <div className="flex items-center space-x-2">
             <div 
-              className={`absolute top-4 left-4 glassmorphism rounded-lg px-4 py-2 text-sm transition-all duration-500 ease-in-out z-10 ${tooltip.show ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
-            >
-              {tooltip.text}
+              className="w-3 h-3 rounded-full" 
+              style={{ backgroundColor: currentEmotion.color }}
+              onMouseEnter={() => setTooltip({ text: currentEmotion.tooltip, show: true })}
+              onMouseLeave={() => setTooltip(prev => ({ ...prev, show: false }))}
+            />
+            <span className="text-sm font-medium">{currentEmotion.emoji} {currentEmotion.name}</span>
+            {tooltip.show && (
+              <div className="absolute bg-gray-900 text-white text-xs p-2 rounded shadow-lg mt-8 z-10">
+                {tooltip.text}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-1">
+              <StarIcon className="w-5 h-5 text-yellow-400" />
+              <span className="text-sm">{starCount}</span>
+            </div>
+            <div className="h-6 w-px bg-gray-600"></div>
+            <div className="flex items-center space-x-1">
+              <MicIcon className={`w-5 h-5 ${isListening ? 'text-green-400 animate-pulse' : 'text-gray-400'}`} />
+              <span className="text-sm">{isListening ? 'Listening...' : 'Voice'}</span>
             </div>
           </div>
-          <div className={`flex-shrink-0 relative ${activeMode === 'chat' ? 'h-full' : 'h-2/5'}`}>
-            <ChatWindow 
-                messages={messages} 
-                onSendMessage={onSendMessage} 
-                currentEmotion={currentEmotion}
-                isTtsEnabled={isTtsEnabled}
-                onReplayMessage={onReplayMessage}
-                isAiTyping={isAiTyping}
-                isListening={isListening}
-                interimTranscript={interimTranscript}
-            />
-            <Gamification starCount={starCount} />
-          </div>
-        </>
+        </div>
+        
+        {/* No tabs - simplified interface */}
+      </div>
+      
+      {/* Main content area */}
+      <div className="flex-1 overflow-auto">
+        {activeMode === 'voice' ? (
+          <VoiceModeDisplay />
+        ) : (
+          <ChatWindow 
+            messages={messages}
+            onSendMessage={onSendMessage}
+            isAiTyping={isAiTyping}
+            isTtsEnabled={isTtsEnabled}
+            onReplayMessage={onReplayMessage}
+            interimTranscript={interimTranscript}
+          />
+        )}
+        {activeMode === 'video' && (
+          <VideoDisplay isCamOn={isCamOn} isMirrorMode={isMirrorMode} />
+        )}
+        {activeMode === 'insights' && <InsightsDashboard />}
+        {activeMode === 'learn' && <Gamification />}
+      </div>
+      
+      {showRewardAnimation && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="animate-bounce text-6xl">🌟</div>
+        </div>
       )}
     </div>
   );
