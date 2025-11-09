@@ -1,6 +1,6 @@
 // Reward Engine for NeuroBridge Gamification
 
-type Badge = {
+export type Badge = {
   id: string;
   name: string;
   description: string;

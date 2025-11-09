@@ -12,11 +12,17 @@ import {
   Badge
 } from '../utils/rewardEngine';
 import { StarIcon, TrophyIcon, FireIcon, LightningBoltIcon } from './icons';
+import QuizBot from './QuizBot';
 
 const RewardsCard: React.FC = () => {
   const [progress, setProgress] = useState<UserProgress>(initializeProgress());
   const [showBadges, setShowBadges] = useState(false);
   const [newBadge, setNewBadge] = useState<string | null>(null);
+  const [quizState, setQuizState] = useState({
+    isQuizActive: false,
+    currentQuestion: '',
+    messages: [] as Array<{ id: number; sender: string; text: string; isTyping?: boolean }>
+  });
   
   // Initialize and update streak on component mount
   useEffect(() => {
@@ -43,6 +49,34 @@ const RewardsCard: React.FC = () => {
       setNewBadge(newBadgeId);
       setTimeout(() => setNewBadge(null), 3000);
     }
+  }, [progress]);
+  
+  // Handle XP earned from quiz
+  const handleQuizComplete = useCallback((xpEarned: number) => {
+    if (xpEarned > 0) {
+      const updated = addXP(progress, xpEarned);
+      const withActivity = completeActivity(updated, 'quiz');
+      setProgress(withActivity);
+      saveProgress(withActivity);
+      
+      // Show badge notification if earned
+      const newBadgeId = withActivity.badges.find(
+        b => b.earned && !progress.badges.some(pb => pb.id === b.id && pb.earned)
+      )?.id;
+      
+      if (newBadgeId) {
+        setNewBadge(newBadgeId);
+        setTimeout(() => setNewBadge(null), 3000);
+      }
+    }
+    
+    // Reset quiz state
+    setQuizState(prev => ({
+      ...prev,
+      isQuizActive: false,
+      currentQuestion: '',
+      messages: []
+    }));
   }, [progress]);
   
   // Dev-only: Add test XP
@@ -119,7 +153,48 @@ const RewardsCard: React.FC = () => {
       </div>
       
       {/* Badges Section */}
-      <div className="border-t border-white/10 pt-3">
+      {/* Quiz Bot Section */}
+      <div className="border-t border-white/10 pt-4">
+        <h4 className="text-sm font-medium text-white mb-3">Learning Challenge</h4>
+        <div className="p-4 bg-gray-800/50 rounded-lg">
+          <QuizBot 
+            onComplete={handleQuizComplete} 
+            onSendMessage={(text) => {
+              setQuizState(prev => ({
+                ...prev,
+                messages: [...prev.messages, {
+                  id: Date.now(),
+                  sender: 'user',
+                  text
+                }]
+              }));
+            }}
+            messages={quizState.messages}
+            currentQuestion={quizState.currentQuestion}
+            setCurrentQuestion={(question) => {
+              setQuizState(prev => ({
+                ...prev,
+                currentQuestion: question,
+                messages: [...prev.messages, {
+                  id: Date.now(),
+                  sender: 'ai',
+                  text: question
+                }]
+              }));
+            }}
+            isQuizActive={quizState.isQuizActive}
+            setIsQuizActive={(isActive) => {
+              setQuizState(prev => ({
+                ...prev,
+                isQuizActive: isActive
+              }));
+            }}
+          />
+        </div>
+      </div>
+      
+      {/* Badges Section */}
+      <div className="border-t border-white/10 pt-4">
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-medium text-gray-300">Recent Badges</h4>
           {earnedBadges.length > 0 && (
