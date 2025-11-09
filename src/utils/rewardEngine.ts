@@ -17,7 +17,7 @@ export type UserProgress = {
   _activity?: {
     completedActivities: number;
     focusedMinutes: number;
-    activityTypes: Set<ActivityType> | string[];
+    activityTypes: Set<string>;
     lastActivityTime: number | null;
   };
 };
@@ -76,7 +76,7 @@ const defaultProgress: UserProgress = {
   _activity: {
     completedActivities: 0,
     focusedMinutes: 0,
-    activityTypes: new Set<ActivityType>(),
+    activityTypes: new Set(),
     lastActivityTime: null,
   },
 };
@@ -227,25 +227,24 @@ export const addXP = (progress: UserProgress, amount: number): UserProgress => {
 
 export const completeActivity = (
   progress: UserProgress, 
-  activityType: ActivityType
+  activityType: string
 ): UserProgress => {
-  // Create a new Set with existing activity types
-  const currentActivityTypes = progress._activity?.activityTypes || new Set<ActivityType>();
-  const updatedActivityTypes = new Set<ActivityType>(currentActivityTypes);
-  updatedActivityTypes.add(activityType);
+  // Update activity tracking
+  const activityTypes = progress._activity?.activityTypes || new Set();
+  activityTypes.add(activityType);
 
-  const updated: UserProgress = {
+  const updated = {
     ...progress,
-    xp: progress.xp + 5, // Base XP for completing any activity
     _activity: {
-      ...progress._activity!,
       completedActivities: (progress._activity?.completedActivities || 0) + 1,
-      activityTypes: updatedActivityTypes,
-      lastActivityTime: Date.now()
-    }
+      focusedMinutes: progress._activity?.focusedMinutes || 0,
+      activityTypes,
+      lastActivityTime: Date.now(),
+    },
   };
-  
-  return checkForNewBadges(updated);
+
+  // Add XP for completing an activity
+  return addXP(updated, 10);
 };
 
 export const addFocusTime = (
@@ -288,17 +287,16 @@ export const awardBadge = (progress: UserProgress, badgeId: string): UserProgres
   };
 };
 
-export const getLevel = (xp: number): { level: number; xpToNext: number; progress: number } => {
-  const BASE_XP = 100;
-  const level = Math.floor(Math.sqrt(xp / BASE_XP)) + 1;
-  const xpForNextLevel = Math.pow(level, 2) * BASE_XP;
-  const xpForCurrentLevel = Math.pow(level - 1, 2) * BASE_XP;
-  const xpToNext = xpForNextLevel - xpForCurrentLevel;
-  const xpInCurrentLevel = xp - xpForCurrentLevel;
+export const getLevel = (xp: number) => {
+  const level = Math.floor(Math.sqrt(xp / 100));
+  const xpForCurrentLevel = Math.pow(level, 2) * 100;
+  const xpForNextLevel = Math.pow(level + 1, 2) * 100;
+  const xpToNext = xpForNextLevel - xp;
+  const progress = ((xp - xpForCurrentLevel) / (xpForNextLevel - xpForCurrentLevel)) * 100;
   
   return {
-    level,
-    xpToNext: xpForNextLevel - xp,
-    progress: (xpInCurrentLevel / (xpForNextLevel - xpForCurrentLevel)) * 100,
+    level: level + 1, // Start at level 1
+    xpToNext,
+    progress: Math.min(100, Math.max(0, progress)) // Clamp between 0-100
   };
 };
