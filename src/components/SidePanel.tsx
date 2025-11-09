@@ -1,6 +1,7 @@
 import React from 'react';
 import EmotionGraph from './EmotionGraph';
 import EmpathyGauge from './EmpathyGauge';
+import RewardsCard from './RewardsCard';
 import { EmotionState, AppMode } from '../types';
 
 const modes: { id: AppMode, label: string, icon: string }[] = [
@@ -23,8 +24,11 @@ const SidePanel: React.FC<SidePanelProps> = ({ currentEmotion, activeMode, setAc
             <div className="flex-shrink-0">
                 <EmpathyGauge value={currentEmotion.score} />
             </div>
-            <div className="flex-grow min-h-0">
+            <div className="flex-grow min-h-0 overflow-y-auto">
                 <EmotionGraph activeEmotion={currentEmotion.name} />
+                <div className="mt-4">
+                    <RewardsCard />
+                </div>
             </div>
             <div className="flex-shrink-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
